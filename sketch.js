@@ -6,9 +6,9 @@ const Body = Matter.Body;
 
 var background, spaceship, bullets, asteriods, earth;
 var backgroundImg, spaceshipImg, bulletsImg, asteriodsImg, earthImg;
-var explosionSound, gameLostSound, shootingSound;
+var explosionSound, gameLostSound, shootingSound, boomSound;
 var asteriodGroup; 
-var restart, restartImg, rule, rulesImg;
+var restart, restartImg, playAgain, playAgainImg;
 var score = 0;
 var life = 5;
 var rules, ruleImg, back, backImg;
@@ -17,21 +17,23 @@ var Play = 1;
 var End = 2;
 var gameState = Beginning;
 
-function preload(){
 
+function preload()
+{
 	backgroundImg = loadImage("background.png");
 	spaceshipImg = loadImage("spaceship.png");
 	bulletsImg = loadImage(" bullet.png");
 	asteriodsImg = loadImage("asteriod.png");
 	earthImg = loadImage("earth.png");
     restartImg = loadImage("restart.png");
-	rulesImg = loadImage("rules.png");
     ruleImg = loadImage("rule.png");
 	backImg = loadImage("back.png");
+	playAgainImg = loadImage("Play Again.png");
 
 	explosionSound = loadSound("explosion.mp3");
 	gameLostSound = loadSound("game lost.mp3");
     shootingSound = loadSound("shooting.mp3");
+	boomSound = loadSound("boom.mp3");
 }
 
 function setup() {
@@ -54,10 +56,6 @@ function setup() {
 	restart.addImage(restartImg);
 	restart.scale = 0.13;
 
-	rule = createSprite(width - 180, height - 45);
-	rule.addImage(rulesImg);
-	rule.scale = 0.35;
-
 	rules = createSprite(width - 670, height - 330);
 	rules.addImage(ruleImg); 
 	rules.visible = false;
@@ -68,13 +66,17 @@ function setup() {
     back.scale = 0.06;
 	back.visible = false;
 
-	engine = Engine.create();
-	world = engine.world;
+	playAgain = createSprite(width/2,height/2);
+	playAgain.addImage(playAgainImg);
+	playAgain.visible = false;
 
 	asteriodGroup = new Group();
 	bulletGroup = new Group();
-	//Create the Bodies Here.
 
+	engine = Engine.create();
+	world = engine.world;
+
+	//Create the Bodies Here.
 
 	Engine.run(engine);
   
@@ -82,73 +84,78 @@ function setup() {
 
 
 function draw() {
-
- drawSprites();
   
-if(gameState === Play){
-
-  if(keyDown("UP_ARROW")){
-	spaceship.y = spaceship.y - 10;
+  drawSprites();
+ 
+  if(gameState === Beginning){
+	rules.visible = true;
+	back.visible = true;
   }
 
-  if(keyDown("DOWN_ARROW")){
-	spaceship.y = spaceship.y + 10;
-  }
+  if(gameState === Play){
 
-   asteriod();
-
-   if(asteriodGroup.isTouching(earth)){
-
-	for(var i=0;i<asteriodGroup.length;i++){ 
-
-   if(asteriodGroup[i].isTouching(earth)){
-	asteriodGroup[i].destroy();
-	life -= 1;
-	} 
-}
-   }
-
-   if(asteriodGroup.isTouching(bulletGroup)){
-
-	for(var i=0;i<bulletGroup.length;i++){ 
-
-   if(asteriodGroup[i].isTouching(bulletGroup) ){
-	asteriodGroup[i].destroy();
-	bulletGroup.destroyEach();
-	score += 2;
-	explosionSound.play();
-	} 
-}
-   }
-
-   if(keyWentDown("space")){
-	bullets = createSprite(displayWidth-1100,spaceship.y-0,20,10)
-	bullets.addImage(bulletsImg);
-	bullets.scale = 0.2;
-	bullets.velocityX = 18
+	if(keyDown("UP_ARROW")){
+		spaceship.y = spaceship.y - 8;
+	  }
 	
+	  if(keyDown("DOWN_ARROW")){
+		spaceship.y = spaceship.y + 8;
+	  }
+	
+	   asteriod();
+	
+	   if(asteriodGroup.isTouching(earth)){
 
-	bulletGroup.add(bullets)
-	spaceship.depth = bullets.depth
-	spaceship.depth = spaceship.depth+2
-	//shootingSound.play();
-  }
+		for(var i=0;i<asteriodGroup.length;i++){ 
+	
+	   if(asteriodGroup[i].isTouching(earth)){
+		asteriodGroup[i].destroy();
+		life -= 1;
+		boomSound.play()
+		} 
+	}
+	   }
 
-  if(mousePressedOver(rule)){
-         rules.visible = true;
-		 back.visible = true;
-		 asteriodGroup.destroyEach();
-  }
+	   if(asteriodGroup.isTouching(bulletGroup)){
 
-  if(score === 20){
-	YouWon();
-asteriodGroup.destroyEach()
-  }
+		for(var i=0;i<bulletGroup.length;i++){ 
+	
+	   if(asteriodGroup[i].isTouching(bulletGroup) ){
+		asteriodGroup[i].destroy();
+		bulletGroup.destroyEach();
+		score += 2;
+		explosionSound.play();
+		} 
+	}
+	   }
 
-   if(life === 0){
+	   if(keyWentDown("space")){
+		bullets = createSprite(displayWidth-1100,spaceship.y-0,20,10)
+		bullets.addImage(bulletsImg);
+		bullets.scale = 0.2;
+		bullets.velocityX = 18
+		
+	
+		bulletGroup.add(bullets)
+		spaceship.depth = bullets.depth
+		spaceship.depth = spaceship.depth+2
+		shootingSound.play();
+	  }
+
+	  if(score === 20){
+		YouWon();
+	asteriodGroup.destroyEach()
 	gameState = End;
-   }
-  fill("white");
+	  }
+	
+	   if(life === 0){
+		gameOver();
+		gameLostSound.play();
+		asteriodGroup.destroyEach();
+		gameState = End;
+	   }
+
+	   fill("white");
   textSize(25);
   text("Score: " + score,1150,50)
  
@@ -156,9 +163,9 @@ asteriodGroup.destroyEach()
   textSize(25);
   text("Life: " + life,650,50)
 
-}
+  }
 
-if(mousePressedOver(back)){
+  if(mousePressedOver(back)){
 	rules.visible = false;
 	back.visible = false;
 	gameState = Play;
@@ -167,8 +174,6 @@ if(mousePressedOver(back)){
 if(gameState === Beginning){
 	rules.visible = true;
 		 back.visible = true;
-		// asteriodGroup.visible = false;
-		// bulletGroup.visible = false;
 	
   }
 
@@ -176,15 +181,18 @@ if(gameState === Beginning){
 	Reset();
   }
 
+  if(mousePressedOver(playAgain)){
+	Reset();
+  }
+
   if(gameState === End){
-	gameOver();
-	gameLostSound.play();
+	playAgain.visible = true;
   }
 
 }
 
 function asteriod(){
-	if(frameCount % 80 === 0){
+	if(frameCount % 40 === 0){
   
 	  asteriods =  createSprite(1450,Math.round(random(height-50,height-700)));
   
@@ -226,5 +234,6 @@ function asteriod(){
 	score = 0;
 	asteriodGroup.destroyEach();
 	gameState = Play
+	playAgain.visible = false;
   }
 
